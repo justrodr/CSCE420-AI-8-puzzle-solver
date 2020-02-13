@@ -70,6 +70,14 @@ struct node {
       depth = d;
       path = p;
   };
+  node() {
+      vector<int> emptyState;
+      vector<string> emptyPath;
+      state = emptyState;
+      hVal = 100000;
+      depth = 0;
+      path = emptyPath;
+  }
 };
 
 void printNode(node n) {
@@ -129,8 +137,8 @@ void bfs(vector<int> initialState, vector<int> targetState) {
     while(!processQueue.empty()) {
 
         node currentFrontNode = processQueue.front();
-        // cout << "Front Node: " << endl; 
-        // printNode(currentFrontNode);
+        cout << "Front Node: " << endl; 
+        printNode(currentFrontNode);
         
         if (vecsEqual(currentFrontNode.state, targetState)) {
             cout << "Solution Found!" << endl;
@@ -144,7 +152,7 @@ void bfs(vector<int> initialState, vector<int> targetState) {
             int leftDepth = currentFrontNode.depth++;
             vector<string> leftPath = currentFrontNode.path;
             leftPath.push_back("LEFT");
-            node leftNode = node(stateAfterLeftMove, leftDepth, 0, leftPath);
+            node leftNode = node(stateAfterLeftMove, 0, leftDepth, leftPath);
             if (!vecsEqual(leftNode.state, currentFrontNode.state)) {
                 processQueue.push(leftNode);
                 // cout << "Pushed Left" << endl; 
@@ -154,40 +162,183 @@ void bfs(vector<int> initialState, vector<int> targetState) {
             int rightDepth = currentFrontNode.depth++;
             vector<string> rightPath = currentFrontNode.path;
             rightPath.push_back("RIGHT");
-            node rightNode = node(stateAfterRightMove, rightDepth, 0, rightPath);
+            node rightNode = node(stateAfterRightMove, 0, rightDepth, rightPath);
             if (!vecsEqual(rightNode.state, currentFrontNode.state)) {
                 processQueue.push(rightNode);
-                // cout << "Pushed right" << endl;
             }
 
             vector<int> stateAfterUpMove = up(currentFrontNode.state);
             int upDepth = currentFrontNode.depth++;
             vector<string> upPath = currentFrontNode.path;
             upPath.push_back("UP");
-            node upNode = node(stateAfterUpMove, upDepth, 0, upPath);
+            node upNode = node(stateAfterUpMove, 0, upDepth, upPath);
             if (!vecsEqual(upNode.state, currentFrontNode.state)) {
                 processQueue.push(upNode);
-                // cout << "Pushed up" << endl;
             }
 
             vector<int> stateAfterDownMove = down(currentFrontNode.state);
             int downDepth = currentFrontNode.depth++;
             vector<string> downPath = currentFrontNode.path;
             downPath.push_back("DOWN");
-            node downNode = node(stateAfterDownMove, downDepth, 0, downPath);
+            node downNode = node(stateAfterDownMove, 0, downDepth, downPath);
             if (!vecsEqual(downNode.state, currentFrontNode.state)) {
                 processQueue.push(downNode);
-                // cout << "Pushed down" << endl;
             }
         }
         processQueue.pop();
-        // int x;
-        // cin >> x;
     }
     if (processQueue.empty()) {
         cout << "Never Found a solution..." << endl;
     }
 
+}
+
+int getH1(vector<int> currentState, vector<int> targetState) {
+    // cout << "Getting H1..." << endl;
+    int hVal = 0;
+    for (int i = 0; i < currentState.size(); i++) {
+        if (currentState.at(i) != targetState.at(i) && currentState.at(i) != 0) {
+            hVal++;
+        }
+    }
+    // cout << "hVal: " << hVal << endl << endl;
+    return hVal;
+}
+
+int getH2(vector<int> currentState, vector<int> targetState) {
+    cout << "Getting H2..." << endl;
+    return 0;
+}
+
+int getHeuristic(node n, vector<int> targetState, string selectedHeuristic) {
+    if (selectedHeuristic == "h1") {
+        return getH1(n.state, targetState);
+    } else {
+        return getH2(n.state, targetState);
+    }
+}
+
+bool isOppositeDirection(string d1, string d2) {
+    if (d1 == "RIGHT" && d2 == "LEFT") {
+        return true;
+    }else if (d1 == "LEFT" && d2 == "RIGHT") {
+        return true;
+    } else if (d1 == "UP" && d2 == "DOWN") {
+        return true;
+    } else if (d1 == "DOWN" && d2 == "UP") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void greedy(vector<int> initialState, vector<int> targetState, string selectedHeuristic) {
+    vector<string> path;
+    node initialNode = node(initialState, 0, 0, path);
+    initialNode.hVal = getHeuristic(initialNode, targetState, selectedHeuristic);
+    queue<node> processQueue;
+    processQueue.push(initialNode);
+
+    while (!processQueue.empty()) {
+        node currentFrontNode = processQueue.front();
+        cout << "Front Node: " << endl; 
+        printNode(currentFrontNode);
+        
+        if (vecsEqual(currentFrontNode.state, targetState)) {
+            cout << "Solution Found!" << endl;
+            break;
+            printNode(currentFrontNode);
+        } else {
+            // node nextNode = currentFrontNode;
+            vector<node> possibleMoves;
+
+            vector<int> stateAfterLeftMove = left(currentFrontNode.state);
+            int leftDepth = currentFrontNode.depth + 1;
+            vector<string> leftPath = currentFrontNode.path;
+            leftPath.push_back("LEFT");
+            node leftNode = node(stateAfterLeftMove, 0, leftDepth, leftPath);
+            // cout << "Getting hVal for left move..." << endl;
+            leftNode.hVal = getHeuristic(leftNode, targetState, selectedHeuristic);
+            cout << "Left Node: " << endl;
+            printNode(leftNode);
+            if (!vecsEqual(leftNode.state, currentFrontNode.state)) { // If left move is possible
+                cout << "Left move is valid" << endl;
+                possibleMoves.push_back(leftNode);
+            }
+
+            vector<int> stateAfterRightMove = right(currentFrontNode.state);
+            int rightDepth = currentFrontNode.depth + 1;
+            vector<string> rightPath = currentFrontNode.path;
+            rightPath.push_back("RIGHT");
+            node rightNode = node(stateAfterRightMove, 0, rightDepth, rightPath);
+            // cout << "Getting hVal for right move..." << endl;
+            rightNode.hVal = getHeuristic(rightNode, targetState, selectedHeuristic);
+            cout << "Right Node: " << endl;
+            printNode(rightNode);
+            if (!vecsEqual(rightNode.state, currentFrontNode.state)) { // If right move is possible
+                cout << "Right move is valid" << endl;
+                possibleMoves.push_back(rightNode);
+            }
+
+            vector<int> stateAfterUpMove = up(currentFrontNode.state);
+            int upDepth = currentFrontNode.depth + 1;
+            vector<string> upPath = currentFrontNode.path;
+            upPath.push_back("UP");
+            node upNode = node(stateAfterUpMove, 0, upDepth, upPath);
+            // cout << "Getting hVal for up move..." << endl;
+            upNode.hVal = getHeuristic(upNode, targetState, selectedHeuristic);
+            cout << "Up Node: " << endl;
+            printNode(upNode);
+            if (!vecsEqual(upNode.state, currentFrontNode.state)) { // If up move is possible
+                cout << "Up move is valid" << endl;
+                possibleMoves.push_back(upNode);
+            }
+
+            vector<int> stateAfterDownMove = down(currentFrontNode.state);
+            int downDepth = currentFrontNode.depth + 1;
+            vector<string> downPath = currentFrontNode.path;
+            downPath.push_back("DOWN");
+            node downNode = node(stateAfterDownMove, 0, downDepth, downPath);
+            // cout << "Getting hVal for down move..." << endl;
+            downNode.hVal = getHeuristic(downNode, targetState, selectedHeuristic);
+            cout << "Down node: " << endl;
+            printNode(downNode);
+            if (!vecsEqual(downNode.state, currentFrontNode.state)) { // If down move is possible
+                cout << "Down move is valid" << endl;
+                possibleMoves.push_back(downNode);
+            }
+
+            string previousMove = "";
+            if (currentFrontNode.path.size() > 0) {
+                previousMove = currentFrontNode.path.back();
+            }
+            // cout << "Previous move: " << previousMove << endl;
+            processQueue.pop();
+
+            int minHVal = 10000;
+            int index = -1;
+            for (int i = 0; i < possibleMoves.size(); i++) {
+                // cout << "MinVal: " << minHVal << endl;
+                // cout << "moveVal: " << possibleMoves.at(i).hVal << endl;
+                if (possibleMoves.at(i).hVal <= minHVal) {
+                    string possibleNextMove = possibleMoves.at(i).path.back();
+                    // cout << "Possible next move: " << possibleNextMove << endl;
+                    if (!isOppositeDirection(previousMove, possibleNextMove)) {
+                        // cout << "Is not opposite direction" << endl;
+                        minHVal = possibleMoves.at(i).hVal;
+                        index = i;
+                    }
+                }
+            }
+            cout << "Next Node: " << endl;
+            printNode(possibleMoves.at(index));
+            processQueue.push(possibleMoves.at(index));
+            possibleMoves.clear();
+            // int x;
+            // cin >> x;
+            //*** What to do in the case of ties???
+        }
+    }
 }
 
 int main(int argc, char** argv) 
@@ -229,21 +380,34 @@ int main(int argc, char** argv)
 
     // Configure final state;
 
+    // vector<int> targetState; 
+    // targetState.push_back(1);
+    // targetState.push_back(2);
+    // targetState.push_back(3);
+    // targetState.push_back(8);
+    // targetState.push_back(0);
+    // targetState.push_back(4);
+    // targetState.push_back(7);
+    // targetState.push_back(6);
+    // targetState.push_back(5);
+
     vector<int> targetState; 
+    targetState.push_back(0);
     targetState.push_back(1);
     targetState.push_back(2);
     targetState.push_back(3);
-    targetState.push_back(8);
-    targetState.push_back(0);
     targetState.push_back(4);
-    targetState.push_back(7);
-    targetState.push_back(6);
     targetState.push_back(5);
+    targetState.push_back(6);
+    targetState.push_back(7);
+    targetState.push_back(8);
 
     // Perform search
 
     if (selectedAlgorithm == "bfs") {
         bfs(initialState, targetState);
+    } else if (selectedAlgorithm == "greedy") {
+        greedy(initialState, targetState, selectedHeuristic);
     }
 
   
