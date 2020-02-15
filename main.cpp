@@ -245,12 +245,23 @@ bool isOppositeDirection(string d1, string d2) {
     }
 }
 
+bool stateAlreadyVisited(vector<int> state, vector<vector<int> > visitedStates) {
+    for (int i= 0; i < visitedStates.size(); i++) {
+        if (vecsEqual(state, visitedStates.at(i))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void greedy(vector<int> initialState, vector<int> targetState, string selectedHeuristic) {
     vector<string> path;
     node initialNode = node(initialState, 0, 0, path);
     initialNode.hVal = getHeuristic(initialNode, targetState, selectedHeuristic);
     queue<node> processQueue;
     processQueue.push(initialNode);
+    vector<vector<int> > visitedStates;
+    visitedStates.push_back(initialNode.state);
 
     while (!processQueue.empty()) {
         node currentFrontNode = processQueue.front();
@@ -321,11 +332,6 @@ void greedy(vector<int> initialState, vector<int> targetState, string selectedHe
                 possibleMoves.push_back(downNode);
             }
 
-            string previousMove = "";
-            if (currentFrontNode.path.size() > 0) {
-                previousMove = currentFrontNode.path.back();
-            }
-            // cout << "Previous move: " << previousMove << endl;
             processQueue.pop();
 
             int minHVal = 10000;
@@ -333,22 +339,23 @@ void greedy(vector<int> initialState, vector<int> targetState, string selectedHe
             for (int i = 0; i < possibleMoves.size(); i++) {
                 // cout << "MinVal: " << minHVal << endl;
                 // cout << "moveVal: " << possibleMoves.at(i).hVal << endl;
-                if (possibleMoves.at(i).hVal < minHVal) {
-                    string possibleNextMove = possibleMoves.at(i).path.back();
-                    // cout << "Possible next move: " << possibleNextMove << endl;
-                    if (!isOppositeDirection(previousMove, possibleNextMove)) {
-                        // cout << "Is not opposite direction" << endl;
+                if (!stateAlreadyVisited(possibleMoves.at(i).state, visitedStates)) {
+                    if (possibleMoves.at(i).hVal < minHVal) {
                         minHVal = possibleMoves.at(i).hVal;
-                        index = i;
                     }
                 }
             }
 
             cout << "***Next Nodes to process***" << endl;
             for (int i = 0; i < possibleMoves.size(); i++) {
-                if (possibleMoves.at(i).hVal == minHVal) {
-                    printNode(possibleMoves.at(i));
-                    processQueue.push(possibleMoves.at(i));
+                if (!stateAlreadyVisited(possibleMoves.at(i).state, visitedStates)) {
+                    if (possibleMoves.at(i).hVal == minHVal) {
+                        printNode(possibleMoves.at(i));
+                        processQueue.push(possibleMoves.at(i));
+                        visitedStates.push_back(possibleMoves.at(i).state);
+                        cout << "number of visited states: " << visitedStates.size() << endl;
+                        cout << "number of nodes to process: " << processQueue.size() << endl;
+                    }
                 }
             }
             // int x;
@@ -358,12 +365,14 @@ void greedy(vector<int> initialState, vector<int> targetState, string selectedHe
     }
 }
 
-void a-star(vector<int> initialState, vector<int> targetState, string selectedHeuristic) {
+void astar(vector<int> initialState, vector<int> targetState, string selectedHeuristic) {
     vector<string> path;
+    vector<vector<int> > visitedStates;
     node initialNode = node(initialState, 0, 0, path);
     initialNode.hVal = getHeuristic(initialNode, targetState, selectedHeuristic);
     queue<node> processQueue;
     processQueue.push(initialNode);
+    visitedStates.push_back(initialNode.state);
 
     while (!processQueue.empty()) {
         node currentFrontNode = processQueue.front();
@@ -434,11 +443,9 @@ void a-star(vector<int> initialState, vector<int> targetState, string selectedHe
                 possibleMoves.push_back(downNode);
             }
 
-            string previousMove = "";
-            if (currentFrontNode.path.size() > 0) {
-                previousMove = currentFrontNode.path.back();
-            }
-            // cout << "Previous move: " << previousMove << endl;
+            // From possible moves, find all that don't repeat.
+            // Out of all possible moves that don't repeat any past moves, get min val
+
             processQueue.pop();
 
             int minHVal = 10000;
@@ -446,27 +453,25 @@ void a-star(vector<int> initialState, vector<int> targetState, string selectedHe
             for (int i = 0; i < possibleMoves.size(); i++) {
                 // cout << "MinVal: " << minHVal << endl;
                 // cout << "moveVal: " << possibleMoves.at(i).hVal << endl;
-                if (possibleMoves.at(i).hVal + possibleMoves.at(i).depth < minHVal) {
-                    string possibleNextMove = possibleMoves.at(i).path.back();
-                    // cout << "Possible next move: " << possibleNextMove << endl;
-                    if (!isOppositeDirection(previousMove, possibleNextMove)) {
-                        // cout << "Is not opposite direction" << endl;
+                if (!stateAlreadyVisited(possibleMoves.at(i).state, visitedStates)) {
+                    if (possibleMoves.at(i).hVal + possibleMoves.at(i).depth < minHVal) {
                         minHVal = possibleMoves.at(i).hVal + possibleMoves.at(i).depth;
-                        index = i;
                     }
                 }
             }
 
             cout << "***Next Nodes to process***" << endl;
             for (int i = 0; i < possibleMoves.size(); i++) {
-                if (possibleMoves.at(i).hVal == minHVal) {
-                    printNode(possibleMoves.at(i));
-                    processQueue.push(possibleMoves.at(i));
+                if (!stateAlreadyVisited(possibleMoves.at(i).state, visitedStates)) {
+                    if (possibleMoves.at(i).hVal + possibleMoves.at(i).depth == minHVal) {
+                        printNode(possibleMoves.at(i));
+                        processQueue.push(possibleMoves.at(i));
+                        visitedStates.push_back(possibleMoves.at(i).state);
+                        cout << "number of visited states: " << visitedStates.size() << endl;
+                        cout << "number of nodes to process: " << processQueue.size() << endl;
+                    }
                 }
             }
-            // int x;
-            // cin >> x;
-            //*** What to do in the case of ties???
         }
     }
 }
@@ -541,6 +546,8 @@ int main(int argc, char** argv)
         bfs(initialState, targetState);
     } else if (selectedAlgorithm == "greedy") {
         greedy(initialState, targetState, selectedHeuristic);
+    } else if (selectedAlgorithm == "astar") {
+        astar(initialState, targetState, selectedHeuristic);
     }
 
   
