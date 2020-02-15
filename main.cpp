@@ -4,6 +4,7 @@
 #include <sstream>
 #include<queue>
 #include <cmath> 
+#include <stack>
 using namespace std;
 
 // g++ -o main main.cpp
@@ -129,17 +130,28 @@ vector<int> down(vector<int> vec) {
     return vec;
 }
 
+bool stateAlreadyVisited(vector<int> state, vector<vector<int> > visitedStates) {
+    for (int i= 0; i < visitedStates.size(); i++) {
+        if (vecsEqual(state, visitedStates.at(i))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void bfs(vector<int> initialState, vector<int> targetState) {
     vector<string> path;
     node initialNode = node(initialState, 0, 0, path);
     queue<node> processQueue;
     processQueue.push(initialNode);
+    vector<vector<int> > visitedStates;
 
     while(!processQueue.empty()) {
 
         node currentFrontNode = processQueue.front();
         cout << "Front Node: " << endl; 
         printNode(currentFrontNode);
+        visitedStates.push_back(currentFrontNode.state);
         
         if (vecsEqual(currentFrontNode.state, targetState)) {
             cout << "Solution Found!" << endl;
@@ -154,7 +166,7 @@ void bfs(vector<int> initialState, vector<int> targetState) {
             vector<string> leftPath = currentFrontNode.path;
             leftPath.push_back("LEFT");
             node leftNode = node(stateAfterLeftMove, 0, leftDepth, leftPath);
-            if (!vecsEqual(leftNode.state, currentFrontNode.state)) {
+            if (!vecsEqual(leftNode.state, currentFrontNode.state) && !stateAlreadyVisited(leftNode.state, visitedStates)) {
                 processQueue.push(leftNode);
                 // cout << "Pushed Left" << endl; 
             }
@@ -164,7 +176,7 @@ void bfs(vector<int> initialState, vector<int> targetState) {
             vector<string> rightPath = currentFrontNode.path;
             rightPath.push_back("RIGHT");
             node rightNode = node(stateAfterRightMove, 0, rightDepth, rightPath);
-            if (!vecsEqual(rightNode.state, currentFrontNode.state)) {
+            if (!vecsEqual(rightNode.state, currentFrontNode.state) && !stateAlreadyVisited(rightNode.state, visitedStates)) {
                 processQueue.push(rightNode);
             }
 
@@ -173,7 +185,7 @@ void bfs(vector<int> initialState, vector<int> targetState) {
             vector<string> upPath = currentFrontNode.path;
             upPath.push_back("UP");
             node upNode = node(stateAfterUpMove, 0, upDepth, upPath);
-            if (!vecsEqual(upNode.state, currentFrontNode.state)) {
+            if (!vecsEqual(upNode.state, currentFrontNode.state) && !stateAlreadyVisited(upNode.state, visitedStates)) {
                 processQueue.push(upNode);
             }
 
@@ -182,7 +194,7 @@ void bfs(vector<int> initialState, vector<int> targetState) {
             vector<string> downPath = currentFrontNode.path;
             downPath.push_back("DOWN");
             node downNode = node(stateAfterDownMove, 0, downDepth, downPath);
-            if (!vecsEqual(downNode.state, currentFrontNode.state)) {
+            if (!vecsEqual(downNode.state, currentFrontNode.state) && !stateAlreadyVisited(downNode.state, visitedStates)) {
                 processQueue.push(downNode);
             }
         }
@@ -192,6 +204,153 @@ void bfs(vector<int> initialState, vector<int> targetState) {
         cout << "Never Found a solution..." << endl;
     }
 
+}
+
+void dfs(vector<int> initialState, vector<int> targetState) {
+    vector<string> path;
+    node initialNode = node(initialState, 0, 0, path);
+    stack<node> processStack;
+    processStack.push(initialNode);
+    vector<vector<int> > visitedStates;
+
+    while(!processStack.empty()) {
+
+        node currentFrontNode = processStack.top();
+        processStack.pop();
+        cout << "Front Node: " << endl; 
+        printNode(currentFrontNode);
+        visitedStates.push_back(currentFrontNode.state);
+        
+        if (vecsEqual(currentFrontNode.state, targetState)) {
+            cout << "Solution Found!" << endl;
+            break;
+            printNode(currentFrontNode);
+        } else {
+            //Push all possible children
+            // cout << "No solution yet..." << endl;
+
+            vector<int> stateAfterLeftMove = left(currentFrontNode.state);
+            int leftDepth = currentFrontNode.depth++;
+            vector<string> leftPath = currentFrontNode.path;
+            leftPath.push_back("LEFT");
+            node leftNode = node(stateAfterLeftMove, 0, leftDepth, leftPath);
+            if (!vecsEqual(leftNode.state, currentFrontNode.state) && !stateAlreadyVisited(leftNode.state, visitedStates)) {
+                processStack.push(leftNode);
+                // cout << "Pushed Left" << endl; 
+            }
+
+            vector<int> stateAfterRightMove = right(currentFrontNode.state);
+            int rightDepth = currentFrontNode.depth++;
+            vector<string> rightPath = currentFrontNode.path;
+            rightPath.push_back("RIGHT");
+            node rightNode = node(stateAfterRightMove, 0, rightDepth, rightPath);
+            if (!vecsEqual(rightNode.state, currentFrontNode.state) && !stateAlreadyVisited(rightNode.state, visitedStates)) {
+                processStack.push(rightNode);
+            }
+
+            vector<int> stateAfterUpMove = up(currentFrontNode.state);
+            int upDepth = currentFrontNode.depth++;
+            vector<string> upPath = currentFrontNode.path;
+            upPath.push_back("UP");
+            node upNode = node(stateAfterUpMove, 0, upDepth, upPath);
+            if (!vecsEqual(upNode.state, currentFrontNode.state) && !stateAlreadyVisited(upNode.state, visitedStates)) {
+                processStack.push(upNode);
+            }
+
+            vector<int> stateAfterDownMove = down(currentFrontNode.state);
+            int downDepth = currentFrontNode.depth++;
+            vector<string> downPath = currentFrontNode.path;
+            downPath.push_back("DOWN");
+            node downNode = node(stateAfterDownMove, 0, downDepth, downPath);
+            if (!vecsEqual(downNode.state, currentFrontNode.state) && !stateAlreadyVisited(downNode.state, visitedStates)) {
+                processStack.push(downNode);
+            }
+        }
+    }
+    if (processStack.empty()) {
+        cout << "Never Found a solution..." << endl;
+    }
+
+}
+
+bool dfsIdsHelper(vector<int> initialState, vector<int> targetState, int maxDepth) {
+    vector<string> path;
+    node initialNode = node(initialState, 0, 0, path);
+    stack<node> processStack;
+    processStack.push(initialNode);
+    vector<vector<int> > visitedStates;
+
+    while(!processStack.empty()) {
+
+        node currentFrontNode = processStack.top();
+        processStack.pop();
+        cout << "Front Node: " << endl; 
+        printNode(currentFrontNode);
+        visitedStates.push_back(currentFrontNode.state);
+        
+        if (vecsEqual(currentFrontNode.state, targetState)) {
+            cout << "Solution Found!" << endl;
+            printNode(currentFrontNode);
+            return true;
+        } else {
+            //Push all possible children
+            // cout << "No solution yet..." << endl;
+
+            vector<int> stateAfterLeftMove = left(currentFrontNode.state);
+            int leftDepth = currentFrontNode.depth + 1;
+            vector<string> leftPath = currentFrontNode.path;
+            leftPath.push_back("LEFT");
+            node leftNode = node(stateAfterLeftMove, 0, leftDepth, leftPath);
+            if (!vecsEqual(leftNode.state, currentFrontNode.state) && !stateAlreadyVisited(leftNode.state, visitedStates) && leftNode.depth <= maxDepth) {
+                processStack.push(leftNode);
+                // cout << "Pushed Left" << endl; 
+            }
+
+            vector<int> stateAfterRightMove = right(currentFrontNode.state);
+            int rightDepth = currentFrontNode.depth + 1;
+            vector<string> rightPath = currentFrontNode.path;
+            rightPath.push_back("RIGHT");
+            node rightNode = node(stateAfterRightMove, 0, rightDepth, rightPath);
+            if (!vecsEqual(rightNode.state, currentFrontNode.state) && !stateAlreadyVisited(rightNode.state, visitedStates) && leftNode.depth <= maxDepth) {
+                processStack.push(rightNode);
+            }
+
+            vector<int> stateAfterUpMove = up(currentFrontNode.state);
+            int upDepth = currentFrontNode.depth + 1;
+            vector<string> upPath = currentFrontNode.path;
+            upPath.push_back("UP");
+            node upNode = node(stateAfterUpMove, 0, upDepth, upPath);
+            if (!vecsEqual(upNode.state, currentFrontNode.state) && !stateAlreadyVisited(upNode.state, visitedStates) && leftNode.depth <= maxDepth) {
+                processStack.push(upNode);
+            }
+
+            vector<int> stateAfterDownMove = down(currentFrontNode.state);
+            int downDepth = currentFrontNode.depth + 1;
+            vector<string> downPath = currentFrontNode.path;
+            downPath.push_back("DOWN");
+            node downNode = node(stateAfterDownMove, 0, downDepth, downPath);
+            if (!vecsEqual(downNode.state, currentFrontNode.state) && !stateAlreadyVisited(downNode.state, visitedStates) && leftNode.depth <= maxDepth) {
+                processStack.push(downNode);
+            }
+        }
+    }
+    if (processStack.empty()) {
+        cout << "Never Found a solution..." << endl;
+        return false;
+    } else {
+        return true;
+    }
+
+}
+
+void ids(vector<int> initialState, vector<int> targetState) {
+    bool foundSolution = false;
+    int maxDepth = 0;
+    while (!foundSolution) {
+        cout << "***dfs with max depth of: " << maxDepth << "***" << endl;
+        foundSolution = dfsIdsHelper(initialState, targetState, maxDepth);
+        maxDepth++;
+    }
 }
 
 int getH1(vector<int> currentState, vector<int> targetState) {
@@ -243,15 +402,6 @@ bool isOppositeDirection(string d1, string d2) {
     } else {
         return false;
     }
-}
-
-bool stateAlreadyVisited(vector<int> state, vector<vector<int> > visitedStates) {
-    for (int i= 0; i < visitedStates.size(); i++) {
-        if (vecsEqual(state, visitedStates.at(i))) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void greedy(vector<int> initialState, vector<int> targetState, string selectedHeuristic) {
@@ -544,8 +694,12 @@ int main(int argc, char** argv)
 
     if (selectedAlgorithm == "bfs") {
         bfs(initialState, targetState);
+    } else if (selectedAlgorithm == "dfs") {
+        dfs(initialState, targetState);
     } else if (selectedAlgorithm == "greedy") {
         greedy(initialState, targetState, selectedHeuristic);
+    } else if (selectedAlgorithm == "ids") {
+        ids(initialState, targetState);
     } else if (selectedAlgorithm == "astar") {
         astar(initialState, targetState, selectedHeuristic);
     }
